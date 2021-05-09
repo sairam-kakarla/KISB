@@ -35,7 +35,7 @@ else{
 hstack->size++;
     }
     else{
-        printf("Insufficient Memory\n");
+        printf("ERR:\nInsufficient Memory\n");
     }
 }
 void display(HSTACK* hstack){
@@ -60,25 +60,4 @@ void cleanHSTACK(HSTACK * hstack){
        temp=next;
        next=next->next;
    } 
-}
-int main(){
-HSTACK session;
-init_HSTACK(&session);
-while(1){
-    char cli_cmd[MAX_LINE];
-    printf(">");
-    fgets(cli_cmd,MAX_LINE,stdin);
-    remove_NLC(cli_cmd);
-    if(strcmp(cli_cmd,"exit")==0){
-        cleanHSTACK(&session);
-        break;
-    }
-    else{
-        push_HSTACK(&session,cli_cmd);
-        if(strcmp(cli_cmd,"history")==0){
-            display(&session);
-        }
-    }
-}
-return 0;
 }

@@ -6,14 +6,44 @@
 #include<sys/stat.h>
 #include<sys/wait.h>
 #include<fcntl.h>
+#include "myshell_history.c"
 #define MAX_WORD 20
 #define MAX_CHAR 100
+#define MAX_ROUTE 300
+
+char buf[MAX_ROUTE];
+char *cdir,*dir,*todir;
 int input_redirection_flag;
 int output_redirection_flag;
 int piping_flag;
 char* input_file = NULL;
 char*output_file = NULL;
 char* username;
+
+void init_cwd(){
+	cdir=getcwd(buf,MAX_ROUTE);
+}
+
+void change_cwd(char *newd){
+	cdir=getcwd(buf,MAX_ROUTE);
+	dir=strcat(cdir,"/");
+	if(newd[0]=='~'){
+		todir=getenv("HOME");
+		chdir(todir);
+	    cdir=getcwd(buf,MAX_ROUTE);
+		return ;
+		
+	}
+	if(newd[0]=='/'){
+		todir=newd;
+	}
+	else{
+	todir=strcat(dir,newd);
+	}
+    chdir(todir);
+	cdir=getcwd(buf,MAX_ROUTE);
+	
+}
 void remove_endOfLine(char line[]) {
 	int i = 0;
 	while (line[i] != '\n')
@@ -40,11 +70,14 @@ void piping_handle(char* args[], char* piping_args[], int pipefd[]) {
 }
 void read_line(char line[]) {
 	printf("\033[0;36m");
-	printf("%s>", username);
+	printf("%s:",username);
+	printf("\033[0m");
+	printf("\033[0;31m");
+	printf("%s>",cdir);
 	printf("\033[0m");
 	char* value = fgets(line, MAX_CHAR, stdin);
 	remove_endOfLine(line);
-	if (strcmp(line, "exit") == 0 || value == NULL)
+	if (strcmp(line, "bye") == 0 || value == NULL)
 		exit(0);
 }
 
@@ -53,7 +86,7 @@ int process_line(char* temp[], char line[]) {
 	int i = 0;
 	temp[i] = strtok(line, " ");
 	if (temp[i] == NULL) {
-		printf("No Command\n");
+		printf("ERR:\nNo Command\n");
 		return 1;
 	}
 	while (temp[i] != NULL) {
@@ -104,14 +137,15 @@ void check_line(char* temp[]) {
 	}
 	int total_count = pipe_cnt + input_redirection_cnt + output_redirection_cnt;
 	if (total_count > 1) {
-		printf("ERR:myshell can't handle this case\n");
+		printf("ERR:\nmyshell can't handle this case\n");
 		temp[0] = NULL;
 	}
 
 }
-int read_parse_line(char* arg[], char line[], char* piping_args[]) {
+int read_parse_line(char* arg[], char line[], char* piping_args[],HSTACK *session) {
 	char* temp[MAX_WORD];
 	read_line(line);
+	push_HSTACK(session,line);
 	int i = 0, pos;
 	process_line(temp, line);
 	check_line(temp);
@@ -134,18 +168,28 @@ int read_parse_line(char* arg[], char line[], char* piping_args[]) {
 	return 1;
 }
 int main() {
+	HSTACK session;
+	init_HSTACK(&session);
 	char *cli_arg[MAX_WORD];
 	char cli_line[MAX_CHAR];
 	char* piping_args[MAX_WORD];
 	username = getlogin();
-	printf("-------------------------------------------------------\n");
-	printf("------------------------Not-BASH-----------------------\n");
-	printf("-------------------------------------------------------\n");
+	init_cwd();
+	printf("-----------------------------KISB----------------------------\n");
+	printf("-----------------------Home Brewed Shell----------------------\n");
 	int pipefd[2];
 	pipe(pipefd);
-	while (read_parse_line(cli_arg, cli_line, piping_args)) {
-		if (strcmp(cli_line, "clear") == 0) {
+	while (read_parse_line(cli_arg, cli_line, piping_args,&session)) {
+		if (strcmp(cli_line, "clean") == 0) {
 			printf("\033[2J\033[1;1H");
+			continue;
+		}
+		if(strcmp(cli_arg[0],"history")==0){
+			display(&session);
+			continue;
+		}
+		if(!strcmp(cli_arg[0],"cd")){
+			change_cwd(cli_arg[1]);
 			continue;
 		}
 		pid_t child_pid = fork();
@@ -158,9 +202,17 @@ int main() {
 				piping_handle(cli_arg, piping_args, pipefd);
 				exit(0);
 			}
-			execvp(cli_arg[0], cli_arg);
+			printf("\e[1;92m");
+	        int result=execvp(cli_arg[0], cli_arg);
+	        printf("\e[0m");
+			if(result==-1){
+				printf("ERR:\n%s: Command not found\n",cli_line);
+			}
 			exit(0);
 
+		}
+		else if(child_pid==-1){
+			printf("ERR:\nChild Process Creation Failed\n");
 		}
 		else {
 			wait(NULL);
