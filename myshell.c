@@ -7,6 +7,7 @@
 #include<sys/wait.h>
 #include<fcntl.h>
 #include "myshell_history.c"
+
 #define MAX_WORD 20
 #define MAX_CHAR 100
 #define MAX_ROUTE 300
@@ -44,12 +45,16 @@ void change_cwd(char *newd){
 	cdir=getcwd(buf,MAX_ROUTE);
 	
 }
+
+
 void remove_endOfLine(char line[]) {
 	int i = 0;
 	while (line[i] != '\n')
 		i++;
 	line[i] = '\0';
 }
+
+
 void piping_handle(char* args[], char* piping_args[], int pipefd[]) {
 	int pid, i;
 	pid = fork();
@@ -68,6 +73,8 @@ void piping_handle(char* args[], char* piping_args[], int pipefd[]) {
 	}
 
 }
+
+
 void read_line(char line[]) {
 	printf("\033[0;36m");
 	printf("%s:",username);
@@ -84,7 +91,7 @@ void read_line(char line[]) {
 int process_line(char* temp[], char line[]) {
 
 	int i = 0;
-	temp[i] = strtok(line, " ");
+	temp[i] = strtok(line," ");
 	if (temp[i] == NULL) {
 		printf("ERR:\nNo Command\n");
 		return 1;
@@ -121,6 +128,7 @@ int pipe_and_redirection_check(char* temp[])
 	}
 	return i;
 }
+
 void check_line(char* temp[]) {
 	int i = 0;
 	int pipe_cnt = 0;
@@ -142,6 +150,7 @@ void check_line(char* temp[]) {
 	}
 
 }
+
 int read_parse_line(char* arg[], char line[], char* piping_args[],HSTACK *session) {
 	char* temp[MAX_WORD];
 	read_line(line);
@@ -164,9 +173,11 @@ int read_parse_line(char* arg[], char line[], char* piping_args[],HSTACK *sessio
 			j++;
 		}
 	}
-
+	
 	return 1;
 }
+
+
 int main() {
 	HSTACK session;
 	init_HSTACK(&session);
