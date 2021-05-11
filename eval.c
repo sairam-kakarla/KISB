@@ -25,6 +25,16 @@ struct expstack * newexpstack(){
     temp->top=-1;
     return temp;
 }
+int isEmpyt(struct expstack *e);
+void display(struct expstack *e);
+void dealloc(struct expstack * e);
+int isEmpty(struct expstack *e);
+
+void dealloc(struct expstack * e){
+    for(int i=0;i<=e->top;i++){
+        free(r->stack[i]);
+    }
+}
 int isEmpty(struct expstack *e){
     return e->top==-1;
 }
@@ -40,7 +50,7 @@ void display(struct expstack *e){
 
 void push(struct expstack *e,char *val){
     if(e->top+1<MAX_TOKEN){
-        e->stack[++e->top]=val;
+        e->stack[++(e->top)]=val;
     }
     else{
         printf("ERR:\nArithmatic Expression Evaluation Stack Overflow\n");
@@ -141,14 +151,20 @@ void evalExpression(char *expression[]){
                     //apply oprnd2 operator operand1
                     //push result in operand stack
                     while(strcmp(operatorStack->stack[operatorStack->top],"(")){
+                        display(operandStack);
                         double op1=atof(pop(operandStack));
                         double op2=atof(pop(operandStack));
                         char *oper=pop(operatorStack);
+                        printf("%f %f %s\n",op2,op1,oper);
+                        display(operandStack);
                         double result=evaluate(op2,op1,oper);
                         if(result!=MIN_DOUBLE){
-                            char res[MAX_TOKEN+10];
-                            sprintf(res,"%f",result);
-                            push(operandStack,res);
+                            char *res1=(char *)malloc(sizeof(char)*MAX_TOKEN+10);
+                            display(operandStack);
+                            sprintf(res1,"%f",result);
+                            display(operandStack);
+                            push(operandStack,res1);
+                            display(operandStack);
                         }
                         else{
                             return ;
@@ -184,6 +200,8 @@ void evalExpression(char *expression[]){
             }
             index++;
         }
+        printf("outside\n");
+        display(operandStack);
         while(!isEmpty(operatorStack)){
                         double op1=atof(pop(operandStack));
                         double op2=atof(pop(operandStack));
@@ -197,6 +215,7 @@ void evalExpression(char *expression[]){
                         else{
                             return ;
                         }
+        display(operandStack);
         }
         printf("result: %lf\n",atof(operandStack->stack[operandStack->top]));
     }
@@ -210,5 +229,4 @@ int result=format_expression(cli_line);
 if(result){
     evalExpression(expression);
 }
-
 }
