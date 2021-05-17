@@ -7,6 +7,7 @@
 #include<sys/wait.h>
 #include<fcntl.h>
 #include "myshell_history.c"
+#include "eval.c"
 
 #define MAX_WORD 20
 #define MAX_CHAR 100
@@ -20,12 +21,14 @@ int piping_flag;
 char* input_file = NULL;
 char*output_file = NULL;
 char* username;
+int null_flag=0;
 
 void init_cwd(){
 	cdir=getcwd(buf,MAX_ROUTE);
 }
 
 void change_cwd(char *newd){
+        if(newd){
 	cdir=getcwd(buf,MAX_ROUTE);
 	dir=strcat(cdir,"/");
 	if(newd[0]=='~'){
@@ -45,7 +48,7 @@ void change_cwd(char *newd){
 	cdir=getcwd(buf,MAX_ROUTE);
 	
 }
-
+}
 
 void remove_endOfLine(char line[]) {
 	int i = 0;
@@ -61,26 +64,31 @@ void piping_handle(char* args[], char* piping_args[], int pipefd[]) {
 	if (pid == 0) {
 		dup2(pipefd[1], 1);
 		close(pipefd[0]);
+		close(pipefd[1]);
 		execvp(args[0], args);
 		perror(args[0]);
+		
 	}
 	else {
+		int pid1=fork();
+		if(!pid1){
 		dup2(pipefd[0], 0);
-		close(pipefd[1]);
+		close(pipefd[0]);
 		close(pipefd[1]);
 		execvp(piping_args[0], piping_args);
 		perror(piping_args[0]);
 	}
-
+	}
+	wait(NULL);
 }
 
 
 void read_line(char line[]) {
 	printf("\033[0;36m");
-	printf("%s:",username);
+	printf("[%s@",username);
 	printf("\033[0m");
 	printf("\033[0;31m");
-	printf("%s>",cdir);
+	printf("%s]$",cdir);
 	printf("\033[0m");
 	char* value = fgets(line, MAX_CHAR, stdin);
 	remove_endOfLine(line);
@@ -94,6 +102,7 @@ int process_line(char* temp[], char line[]) {
 	temp[i] = strtok(line," ");
 	if (temp[i] == NULL) {
 		printf("ERR:\nNo Command\n");
+		null_flag=1;
 		return 1;
 	}
 	while (temp[i] != NULL) {
@@ -172,11 +181,19 @@ int read_parse_line(char* arg[], char line[], char* piping_args[],HSTACK *sessio
 			i++;
 			j++;
 		}
+		piping_args[j]=NULL;
 	}
 	
 	return 1;
 }
 
+void evalute_Expression(char * cli_line){
+	int valid=format_expression(cli_line);
+	if(valid){
+		evalExpression(expression);
+	}
+	printf("ERR:\nInvalid Expression\n");
+}
 
 int main() {
 	HSTACK session;
@@ -191,6 +208,10 @@ int main() {
 	int pipefd[2];
 	pipe(pipefd);
 	while (read_parse_line(cli_arg, cli_line, piping_args,&session)) {
+		if(null_flag){
+		null_flag=0;
+		continue;
+	    }
 		if (strcmp(cli_line, "clean") == 0) {
 			printf("\033[2J\033[1;1H");
 			continue;
@@ -203,6 +224,10 @@ int main() {
 			change_cwd(cli_arg[1]);
 			continue;
 		}
+		if(!strcmp(cli_arg[0],"eval")){
+			evalute_Expression(cli_line);
+			continue;
+		}
 		pid_t child_pid = fork();
 		if (child_pid == 0) {
 			if (input_redirection_flag == 1 && input_file != NULL)
@@ -213,9 +238,7 @@ int main() {
 				piping_handle(cli_arg, piping_args, pipefd);
 				exit(0);
 			}
-			printf("\e[1;92m");
 	        int result=execvp(cli_arg[0], cli_arg);
-	        printf("\e[0m");
 			if(result==-1){
 				printf("ERR:\n%s: Command not found\n",cli_line);
 			}

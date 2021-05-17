@@ -26,26 +26,16 @@ struct expstack * newexpstack(){
     return temp;
 }
 int isEmpyt(struct expstack *e);
-void display(struct expstack *e);
 void dealloc(struct expstack * e);
 int isEmpty(struct expstack *e);
 
 void dealloc(struct expstack * e){
     for(int i=0;i<=e->top;i++){
-        free(r->stack[i]);
+        free(e->stack[i]);
     }
 }
 int isEmpty(struct expstack *e){
     return e->top==-1;
-}
-void display(struct expstack *e){
-    if(!isEmpty(e)){
-    printf("Displaying stack of length %d\n",e->top);
-    for(int i=0;i<=e->top;i++){
-        printf("%s  ",e->stack[i]);
-    }
-    printf("\n");
-    }
 }
 
 void push(struct expstack *e,char *val){
@@ -64,12 +54,12 @@ char * pop(struct expstack *e){
         printf("ERR:\nArithmatic Expression Evaluation Stack Underflow\n");
     }
 }
-void remove_endOfLine(char line[]) {
-	int i = 0;
-	while (line[i] != '\n')
-		i++;
-	line[i] = '\0';
-}
+// void remove_endOfLine(char line[]) {
+// 	int i = 0;
+// 	while (line[i] != '\n')
+// 		i++;
+// 	line[i] = '\0';
+// }
 
 int operator(char *op){
     return (!strcmp(op,"+") || !strcmp(op,"-") || !strcmp(op,"*") || !strcmp(op,"/") || !strcmp (op,"^") || !strcmp(op,"(") || !strcmp(op,")")); 
@@ -77,6 +67,7 @@ int operator(char *op){
 
 int format_expression(char *cli_line){
     //extracts the expression for the command statement
+    printf("%s\n",cli_line);
     char *exp=strtok(cli_line," ");
     exp=strtok(NULL," ");
     int index=0;
@@ -151,20 +142,15 @@ void evalExpression(char *expression[]){
                     //apply oprnd2 operator operand1
                     //push result in operand stack
                     while(strcmp(operatorStack->stack[operatorStack->top],"(")){
-                        display(operandStack);
+                        
                         double op1=atof(pop(operandStack));
                         double op2=atof(pop(operandStack));
                         char *oper=pop(operatorStack);
-                        printf("%f %f %s\n",op2,op1,oper);
-                        display(operandStack);
                         double result=evaluate(op2,op1,oper);
                         if(result!=MIN_DOUBLE){
                             char *res1=(char *)malloc(sizeof(char)*MAX_TOKEN+10);
-                            display(operandStack);
                             sprintf(res1,"%f",result);
-                            display(operandStack);
                             push(operandStack,res1);
-                            display(operandStack);
                         }
                         else{
                             return ;
@@ -200,8 +186,7 @@ void evalExpression(char *expression[]){
             }
             index++;
         }
-        printf("outside\n");
-        display(operandStack);
+    
         while(!isEmpty(operatorStack)){
                         double op1=atof(pop(operandStack));
                         double op2=atof(pop(operandStack));
@@ -215,18 +200,18 @@ void evalExpression(char *expression[]){
                         else{
                             return ;
                         }
-        display(operandStack);
+    
         }
         printf("result: %lf\n",atof(operandStack->stack[operandStack->top]));
     }
 
 }
-int main(){
-char cli_line[MAX_EXP];
-fgets(cli_line,MAX_EXP,stdin);
-remove_endOfLine(cli_line);
-int result=format_expression(cli_line);
-if(result){
-    evalExpression(expression);
-}
-}
+// int main(){
+// char cli_line[MAX_EXP];
+// fgets(cli_line,MAX_EXP,stdin);
+// remove_endOfLine(cli_line);
+// int result=format_expression(cli_line);
+// if(result){
+//     evalExpression(expression);
+// }
+// }
