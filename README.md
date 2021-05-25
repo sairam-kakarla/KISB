@@ -11,7 +11,7 @@ myshell.c-- Contains the function declarations and ds related to parsing, error 
 myshell_history.c-- Contains the declarations and ds(linked list) for implementing command history.
 
 ## Installation
-This shell is made for linux based Operating Systems only
+This shell is made for linux based Operating Systems only<br>
 GCC compiler is required to compile the shell.
 * Clone the repo and ```cd``` into the directory. 
 * Run the command ```make``` in terminal
