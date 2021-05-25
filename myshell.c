@@ -8,12 +8,15 @@
 #include<fcntl.h>
 #include "myshell_history.c"
 #include "eval.c"
+#include "cust.c"
 
 #define MAX_WORD 20
 #define MAX_CHAR 100
 #define MAX_ROUTE 300
 
+
 char buf[MAX_ROUTE];
+char line_buffer[MAX_CHAR];
 char *cdir,*dir,*todir;
 int input_redirection_flag;
 int output_redirection_flag;
@@ -22,6 +25,7 @@ char* input_file = NULL;
 char*output_file = NULL;
 char* username;
 int null_flag=0;
+
 
 void init_cwd(){
 	cdir=getcwd(buf,MAX_ROUTE);
@@ -84,12 +88,12 @@ void piping_handle(char* args[], char* piping_args[], int pipefd[]) {
 
 
 void read_line(char line[]) {
-	printf("\033[0;36m");
-	printf("[%s@",username);
-	printf("\033[0m");
-	printf("\033[0;31m");
-	printf("%s]$",cdir);
-	printf("\033[0m");
+	printf("%s",curr_usr_color);
+	printf("[%s]@",username);
+	printf("%s",ANSI_COLOR_RESET);
+	printf("%s",curr_dir_color);
+	printf("[%s]$",cdir);
+	printf("%s",ANSI_COLOR_RESET);
 	char* value = fgets(line, MAX_CHAR, stdin);
 	remove_endOfLine(line);
 	if (strcmp(line, "bye") == 0 || value == NULL)
@@ -97,9 +101,9 @@ void read_line(char line[]) {
 }
 
 int process_line(char* temp[], char line[]) {
-
+	strcpy(line_buffer,line);
 	int i = 0;
-	temp[i] = strtok(line," ");
+	temp[i] = strtok(line_buffer," ");
 	if (temp[i] == NULL) {
 		printf("ERR:\nNo Command\n");
 		null_flag=1;
@@ -109,6 +113,7 @@ int process_line(char* temp[], char line[]) {
 		temp[++i] = strtok(NULL, " ");
 	}
 	return 1;
+	
 }
 
 int pipe_and_redirection_check(char* temp[])
@@ -192,12 +197,16 @@ void evalute_Expression(char * cli_line){
 	if(valid){
 		evalExpression(expression);
 	}
+	else{
 	printf("ERR:\nInvalid Expression\n");
+	}
 }
 
 int main() {
 	HSTACK session;
 	init_HSTACK(&session);
+	curr_dir_color=init_color();
+	curr_usr_color=init_color();
 	char *cli_arg[MAX_WORD];
 	char cli_line[MAX_CHAR];
 	char* piping_args[MAX_WORD];
@@ -214,6 +223,14 @@ int main() {
 	    }
 		if (strcmp(cli_line, "clean") == 0) {
 			printf("\033[2J\033[1;1H");
+			continue;
+		}
+		if(!strcmp(cli_line,"cust")){
+			display_color();
+			printf("Username Color Update\n");
+			curr_usr_color=update_color();
+			printf("Working Directory Color Update\n");
+			curr_dir_color=update_color();
 			continue;
 		}
 		if(strcmp(cli_arg[0],"history")==0){
