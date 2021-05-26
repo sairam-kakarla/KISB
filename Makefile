@@ -1,3 +1,3 @@
 $(CC) = gcc
 final:
-	  	$(CC) myshell.c -lm -o kisb
+	  	$(CC) myshell.c -lm -lreadline -o kisb
