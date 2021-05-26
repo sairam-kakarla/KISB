@@ -5,7 +5,9 @@
 #include<sys/types.h>
 #include<sys/stat.h>
 #include<sys/wait.h>
+#include<libgen.h>
 #include<fcntl.h>
+#include<readline/readline.h>
 #include "myshell_history.c"
 #include "eval.c"
 #include "cust.c"
@@ -13,8 +15,7 @@
 #define MAX_WORD 20
 #define MAX_CHAR 100
 #define MAX_ROUTE 300
-
-
+#define MAX_PROMPT 300
 char buf[MAX_ROUTE];
 char line_buffer[MAX_CHAR];
 char *cdir,*dir,*todir;
@@ -25,7 +26,7 @@ char* input_file = NULL;
 char*output_file = NULL;
 char* username;
 int null_flag=0;
-
+char *value;
 
 void init_cwd(){
 	cdir=getcwd(buf,MAX_ROUTE);
@@ -56,8 +57,9 @@ void change_cwd(char *newd){
 
 void remove_endOfLine(char line[]) {
 	int i = 0;
-	while (line[i] != '\n')
+	while (line[i] != '\n' && i<MAX_CHAR)
 		i++;
+	if(i<MAX_CHAR-1)
 	line[i] = '\0';
 }
 
@@ -86,18 +88,48 @@ void piping_handle(char* args[], char* piping_args[], int pipefd[]) {
 	wait(NULL);
 }
 
-
-void read_line(char line[]) {
-	printf("%s",curr_usr_color);
-	printf("[%s]@",username);
-	printf("%s",ANSI_COLOR_RESET);
-	printf("%s",curr_dir_color);
-	printf("[%s]$",cdir);
-	printf("%s",ANSI_COLOR_RESET);
-	char* value = fgets(line, MAX_CHAR, stdin);
+void store(char line[],char *mem_str){
+	int i;	
+	for(i=0;i<MAX_CHAR;i++){
+		line[i]='\0';
+	}
+	for(i=0;i<MAX_CHAR;i++){
+		line[i]=*(mem_str+i);
+	}/*
+	strncpy(line,mem_str,MAX_CHAR);
+	cli[MAX_CHAR-1]='\0';*/
+}
+void cleanse(char buff[],int length){
+for(int i=0;i<length;i++){
+             buff[i]='\0';
+        }
+}
+void read_line(char line[],HSTACK *session) {
+	char buff_promt[MAX_PROMPT];
+        cleanse(buff_promt,MAX_PROMPT);
+        char *prompt;
+        prompt=strcat(buff_promt,curr_usr_color);
+        prompt=strcat(buff_promt,"[");
+        prompt=strcat(buff_promt,username);
+        prompt=strcat(buff_promt,"]@");
+        prompt=strcat(buff_promt,ANSI_COLOR_RESET);
+        prompt=strcat(buff_promt,curr_dir_color);
+        prompt=strcat(buff_promt,cdir);
+        prompt=strcat(buff_promt,ANSI_COLOR_RESET);  
+        prompt=strcat(buff_promt,">>");
+	//printf("%s",curr_usr_color);
+	//printf("[%s]@",username);
+	//printf("%s",ANSI_COLOR_RESET);
+	//printf("%s",curr_dir_color);
+	//printf("[%s]",cdir);
+	//printf("%s",ANSI_COLOR_RESET);
+	value=readline(prompt);
+	store(line,value);
 	remove_endOfLine(line);
-	if (strcmp(line, "bye") == 0 || value == NULL)
-		exit(0);
+	free(value);
+        cleanse(buff_promt,MAX_PROMPT);
+	if (strcmp(line, "bye") == 0 || value == NULL){
+         exit(0);}
 }
 
 int process_line(char* temp[], char line[]) {
@@ -167,7 +199,7 @@ void check_line(char* temp[]) {
 
 int read_parse_line(char* arg[], char line[], char* piping_args[],HSTACK *session) {
 	char* temp[MAX_WORD];
-	read_line(line);
+	read_line(line,session);
 	push_HSTACK(session,line);
 	int i = 0, pos;
 	process_line(temp, line);
@@ -205,6 +237,9 @@ void evalute_Expression(char * cli_line){
 int main() {
 	HSTACK session;
 	init_HSTACK(&session);
+	value=malloc(sizeof(char)*MAX_CHAR);
+	rl_readline_name = basename(value);
+	rl_attempted_completion_function = completion;
 	curr_dir_color=init_color();
 	curr_usr_color=init_color();
 	char *cli_arg[MAX_WORD];
@@ -217,10 +252,11 @@ int main() {
 	int pipefd[2];
 	pipe(pipefd);
 	while (read_parse_line(cli_arg, cli_line, piping_args,&session)) {
+		rl_bind_key('\t',rl_complete);
 		if(null_flag){
 		null_flag=0;
 		continue;
-	    }
+	    	}
 		if (strcmp(cli_line, "clean") == 0) {
 			printf("\033[2J\033[1;1H");
 			continue;
