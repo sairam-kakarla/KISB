@@ -117,12 +117,6 @@ void read_line(char line[],HSTACK *session) {
         prompt=strcat(buff_promt,cdir);
         prompt=strcat(buff_promt,ANSI_COLOR_RESET);  
         prompt=strcat(buff_promt,">>");
-	//printf("%s",curr_usr_color);
-	//printf("[%s]@",username);
-	//printf("%s",ANSI_COLOR_RESET);
-	//printf("%s",curr_dir_color);
-	//printf("[%s]",cdir);
-	//printf("%s",ANSI_COLOR_RESET);
 	value=readline(prompt);
 	store(line,value);
 	remove_endOfLine(line);
