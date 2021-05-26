@@ -1,6 +1,3 @@
-// #include<stdio.h>
-// #include<string.h>
-// #include<stdlib.h>
 #define MAX_COLOR 50
 char ANSI_COLOR_RED[MAX_COLOR]="\x1b[31m";
 char ANSI_COLOR_GREEN[MAX_COLOR]="\x1b[32m";
