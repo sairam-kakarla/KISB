@@ -1,7 +1,12 @@
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
+#include<readline/readline.h>
 #define MAX_LINE 30
+
+int point=0;
+char* newEnv[100000];
+
 typedef struct history_list_entry{
     char cmd[MAX_LINE];
     int rank;
@@ -19,6 +24,7 @@ HNODE* new_HNODE(char cmd[]){
     HNODE *temp=(HNODE * )malloc(sizeof(HNODE));
     strcpy(temp->cmd,cmd);
     temp->next=NULL;
+	newEnv[point++]=temp->cmd;
     return temp;
 }
 void push_HSTACK(HSTACK* hstack,char cmd[]){
@@ -60,4 +66,26 @@ void cleanHSTACK(HSTACK * hstack){
        temp=next;
        next=next->next;
    } 
+}
+char* generator(const char* text, int state) 
+{
+	static int index, len;
+    char *comm;
+    if (!state)
+ 	{
+	    index = 0;
+        len = (int)strlen (text);
+    }
+
+    while ( (comm = newEnv[index])) 
+	{
+		index++;
+        if (strncmp (comm, text, len) == 0)
+        	return strdup(comm);
+    }
+    return NULL;
+}
+char** completion( const char * text , int start,  int end)
+{
+	return rl_completion_matches (text,generator);
 }
